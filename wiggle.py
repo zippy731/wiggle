@@ -1,3 +1,49 @@
+**Wiggle**
+---
+Generates semirandom keyframes for zoom/spin/translation.  Built for use with Disco Diffusion notebook [link]
+
+Concept: Wiggle is based on the notion of 'episodes' of motion. Each episode is made of three distinct phases: attack (ramp up), decay (ramp down), and sustain (hold level steady).  
+
+Each parameter will ramp UP to a peak during attack phase, will ramp DOWN to a quiet level during decay phase, and will HOLD the quiet level during sustain phase.  
+
+The parameters allow you to set the overall duration of each episode, the time split between phases, and the relative levels of the phases.
+
+Setting | Description | Default
+--- | --- | ---
+***Time settings***||
+max_frames|Total number of frames to model|1000
+episode_duration|average duration of each episode, in frames|48
+wig_adsmix|time split between attack,decay,sustain periods,should sum to 1.0|(.2,.4,.4)
+wig_time_var|allowable variance in time ranges. Must be < 1.0.  Set to 0 for precise control of frames|0.2 
+***Zoom settings***||
+wig_zoom_range|min/max peak zoom values. Negative values are zoom out.  In DD41, zoom values range around 1.0, so this zoom range is added to 1.0 later|(.12,.18)
+wig_zoom_quiet_scale_factor|multiplier factor to reduce zoom peak to zoom 'sustain' level, as function of above range.|.1
+***Motion settings***||
+wig_angle_range|min/max rotation angle range - max degrees per frame|(-3,3)
+wig_trx_range|min/max max pixels of x translation per frame|(-6,6)
+wig_try_range|min/max max pixels of y translation per frame|(-6,6)
+wig_quiet_scale_factor|multiplier factor to reduce motion vales from peak to lower 'quiet' sustain period|.15
+
+**Typical ADS/ settings:**
+Different types of motion can be gained with combinations of the ADS timing and the two quiet scale settings
+
+ADS Settings | WZQS | WQS |  Description 
+--- | --- | --- | ---
+***ADS tweaks***|||
+(.2,.4,.4)| 0.20 | 0.15 |'purposeful' motion, gliding toward destination, pause at destination
+(.1,.5,.4)| 0.20 | 0.15 |'sharp' motion, gliding toward destination, pause at destination
+(.3,.3,.4)| 0.20 | 0.15 |meandering motion, gently gliding toward destination, pause at destination
+***quiet factor tweaks***|||
+(.2,.4,.4)| 0.85 | 0.15 |steady zooming, with periodic turns
+(.2,.4,.4)| 3.0 | 0.15 |(use with lower base zoom ranges) - sharp turns with minimal zooming, then faster zooming with less turning
+
+
+
+
+
+
+
+
 #======= WIGGLE MODE
 #@markdown ---
 #@markdown ####**Wiggle:**
@@ -6,8 +52,11 @@
 import random
 max_frames = 1000#@param {type:"number"}
 
-wiggle_instead = True #@param {type:"boolean"} 
-wiggle_show_params = True #@param {type:"boolean"} 
+wiggle_instead = True 
+wiggle_show_params = True 
+#if used directly in disco notebook, these sh/b parameterized. Otherwise, just leave them as True.
+#wiggle_instead = True #@param {type:"boolean"} 
+#wiggle_show_params = True #@param {type:"boolean"} 
 
 if wiggle_instead:
     # make random keyframes within the range of max_frames
@@ -23,6 +72,10 @@ if wiggle_instead:
     #attack/decay/sustain mix
     wig_adsmix = (.083,.5,.417) #should sum to 1.0
     wig_time_var = 0.0 # def 0.2 | allowable variance in time ranges. Must be < 1.0.  Set to 0 for precise control of frames.
+    #lead_pause = random.randrange(11,13) # frames before first episode
+    lead_pause = 12 # number of warmup frames before first episode. Recommended 6-12 to allow image to form before animation starts. 
+    
+    #calc time ranges    
     wig_attack_range=(round(episode_duration*wig_adsmix[0]*(1-wig_time_var),0),round(episode_duration*wig_adsmix[0]*(1+wig_time_var),0))
     wig_decay_range=(round(episode_duration*wig_adsmix[1]*(1-wig_time_var),0),round(episode_duration*wig_adsmix[1]*(1+wig_time_var),0))
     wig_sustain_range=(round(episode_duration*wig_adsmix[2]*(1-wig_time_var),0),round(episode_duration*wig_adsmix[2]*(1+wig_time_var),0))
@@ -40,8 +93,6 @@ if wiggle_instead:
     episode_starts = [0]
     episode_peaks = [0]
     i = 1
-    #lead_pause = random.randrange(11,13) # frames before first episode
-    lead_pause = 12
     skip_1 = 0
     wig_frame_count = round(lead_pause,0)
     while i < episode_count:
