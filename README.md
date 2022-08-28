@@ -6,6 +6,8 @@ Wiggle animation keyframe creator
 
 Made for use with CLIP-guided diffusion AI image generator 'Disco Diffusion'.  Latest version (5.1) is meant for DD 5.1 and later, which use degrees for rotations.
 
+Also works with 2D animations in 'Deforum' Stable Diffusion notebook.
+
 If you are using Disco Diffusion 4.1 or 5.0, use the earlier versions of Wiggle.
 
 
